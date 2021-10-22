@@ -1,133 +1,218 @@
-package co.edu.unbosque.controller;
+package src.co.edu.unbosque.controller;
 
- import java.util.Iterator;
+ import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 
-import co.edu.unbosque.model.*;
- import co.edu.unbosque.view.View;
+import src.co.edu.unbosque.model.Letra;
+import src.co.edu.unbosque.view.View;
+
+
 
 public class Controller {
 
     private View view;
-    private Torneo torneo;
-    private Multiplicacion_matriz matriz;
+    private Letra[] lista;
+    private String[] m;
+    private String palabra;
+    private String palabraS;
+    private String[] s;
+    private String clave;
+    private ArrayList<String> r;
+
 
 
     public  Controller() {
+    	lista = new Letra[32];
         view = new View();
-        torneo = new Torneo();
-        matriz = new Multiplicacion_matriz();
         run();
     }
     public void run(){
-    	view.mostrarInformacion("Bienvenido Al programa de algoritmos de divide y Venceras");
-    	int opcion = view.mostrarOpcion("Seleccione el algoritmo que desea utilizar",
-    			"Partido de Tennis" , "Multiplicacion de Matrices");
-
-    	if(opcion == 0) {
-    	try {
-			int n = Integer.parseInt(view.ingresarInformacion("Ingrese el numero de jugadores (Maximo 50)"));
-			
-			if(n <=1 || n>50) {
-				throw new Exception();
-			}else {
-				long startTime = System.nanoTime();
-				torneo.torneo(n);
-				long endTime = System.nanoTime();
-				view.mostrarInformacion("Proceso Terminado en: " + (endTime-startTime)/1e6 + " ms");
-				view.mostrarInformacion(torneo.imprimirTabla(n));
-			}
-			
-		} catch (Exception e) {
-			// TODO: handle exception
-			view.mostrarInformacion("Debe ingresar un numero no mayor a 50 y mayor a 1");
-			run();
-		}
-    	}else {
-    		opcion = view.mostrarOpcion("¿Desea llenar la matriz manual o automaticamente?",
-    				"Automatico" , "Manual");
-    		int opcion2 = view.mostrarOpcion("¿Que algoritmo desea usar?",
-    				"Divide y venceras (Stressen)" , "Generico");
-    		try {
-    			int n = Integer.parseInt(view.ingresarInformacion("Ingrese el tamano de la matriz (Debe ser par para el algoritmo de Strassen)"));
-    			if(opcion2 == 0 && !isPowerOfTwo(n)) {
-    				while(!isPowerOfTwo(n)) {
-    					n = Integer.parseInt
-    							(view.ingresarInformacion
-    									("Error: el tamaño de la matriz debe ser potencia de 2; " 
-    											+ "\nIngrese el tamano de la matriz"));
-    				}
-    			}
-    			
-    			
-    			
-    			int [][] A= llenarMatriz(n, opcion);
-    			int [][] B= llenarMatriz(n, opcion);
-
-    			
-    
-    			
-    			int[][] C = null;
-    			String impresion = "Matriz A\n";
-    			impresion = impresion + imprimirMatriz(A);
-    			impresion = impresion + "\n\nMatriz B\n" + imprimirMatriz(B);
-    			
-    			
-        				
-    			if(opcion == 0) {
-    				C = matriz.strassen(A, B);
-    				impresion = impresion + "\n\nMatriz C= AxB \n" + imprimirMatriz(C);
-    			}else {
-    				C = matriz.regular(A, B);
-    				impresion = impresion + "\n\nMatriz C= AxB \n" + imprimirMatriz(C);
-    			}
-    			view.mostrarInformacion(impresion);
-    		}catch(Exception e) {
-    			view.mostrarInformacion("Error: Ingrese un numero valido y mayor a 0");
-				run();
-    		}
+    	palabra = view.ingresarInformacion("Ingrese la palabra a cifrar").toUpperCase();
+    	palabra = palabra.replace(" ", "");
+    	do {
+    	palabraS = view.ingresarInformacion("Ingrese la clave secreta"
+    			+ "(Debe ser larga que la palabra a cifrar)").toUpperCase();
+    	palabraS = palabraS.replace(" ", "");
     	}
+    	while(palabraS.length() < palabra.length());
+    	
+    	
+    	m = new String[palabra.length()];
+    	s =  new String[palabraS.length()];
+    	inicializarArreglo();
+    	asignarBinarios();
+    	
+    
+
+    	
+    	definirClave(15,25, regla30());
+    	String[] s = comparar(0,null);
+    	view.mostrarInformacion("Palabra Cifrada: " + devolverPalabra(s) + 
+    			"\nUsando la Clave: " + clave);
+    	String[] n = comparar(1,s);
+    	view.mostrarInformacion("Palabra Descifrada: " + devolverPalabra(n));
     }
     
-    public String imprimirMatriz(int[][] matriz) {
-    	String resultado = "";
-    	for (int i = 0; i < matriz.length; i++) {
-    		resultado = resultado +" \n";
-			for (int j = 0; j < matriz.length; j++) {
-				resultado = resultado + matriz[i][j] + " ";
+    public void inicializarArreglo() {
+    	String[] s = {"#","A","B","C","D","E","F","G","H"
+    			,"I","J","K","L","M","N","Ñ","O","P","Q","R","S","T","U"
+    			,"V","W","X","Y","Z","1","2","3","4"};
+    	
+    	for (int i = 0; i < lista.length; i++) {
+			lista[i] = new Letra(Integer.toBinaryString(i), s[i]);
+			//System.out.println(lista[i].getSimbolo() + " valor: " + lista[i].getValor());
+		}
+    }
+    
+    public void asignarBinarios() {
+    	String bin;
+    	for (int i = 0; i < m.length; i++) {
+    		if(i != palabra.length()-1) {
+			bin = buscarLetra(palabra.substring(i, i+1));
+    		}else {
+    			bin = buscarLetra(palabra.substring(i));
+    		}
+    		m[i] = bin;
+    		
+		}
+    	
+    	for (int i = 0; i < s.length; i++) {
+    		if(i != palabraS.length()-1) {
+			bin = buscarLetra(palabraS.substring(i, i+1));
+    		}else {
+    			bin = buscarLetra(palabraS.substring(i));
+    		}
+    		s[i] = bin;
+    		
+		}
+    }
+    
+    public String buscarLetra(String n) {
+    	for (int i = 0; i < lista.length; i++) {
+			if(n.equals(lista[i].getSimbolo())) {
+				return lista[i].getValor();
 			}
+		}
+    	return "";
+    }
+    
+    public ArrayList<String> regla30() {
+    	String vecinos = "";
+    	String cadena = "";
+    	String sigCadena = "";
+    	ArrayList<String> arr = new ArrayList<>();
+    	
+    	for (int i = 0; i < s.length; i++) {
+			cadena = cadena+ s[i];
+		}
+    	int n = cadena.length();
+    	arr.add(cadena);
+    	for (int i = 0; i < 200; i++) {
+    		sigCadena = "";
+			for (int j = 0; j < n; j++) {
+				vecinos = definirVecinos(j, cadena);
+				if(vecinos.equalsIgnoreCase("100") ||
+						vecinos.equalsIgnoreCase("011") ||
+						vecinos.equalsIgnoreCase("010") ||
+						vecinos.equalsIgnoreCase("001") ) {
+					sigCadena = sigCadena + "1";
+				}else {
+					sigCadena = sigCadena + "0";
+				}
+				
+			}
+			cadena = sigCadena;
+			arr.add(sigCadena);
+		}
+    	return arr;
+    }
+    public String definirVecinos(int i, String cadena) {
+    	String v = "";
+    	if(i == 0) {
+    		v= String.valueOf(""+cadena.charAt(cadena.length()-1) 
+    				+cadena.charAt(i) + cadena.charAt(i+1));
+
+    	}else if(i == cadena.length()-1) {
+    		v= ""+cadena.charAt(i-1) 
+    				+cadena.charAt(i) + cadena.charAt(0);
+
+    	}else {
+    		v=""+cadena.charAt(i-1) 
+    				+cadena.charAt(i) + cadena.charAt(i+1);
+
+    	}
+    	return v;
+    }
+    public void definirClave(int i, int j, ArrayList<String> s) {
+    	clave = "";
+    	String cadena = "";
+
+    	
+    	for (int l = 0; l < this.s.length; l++) {
+			cadena = cadena+ this.s[l];
+		}
+    	for (int k = 0; k < cadena.length(); k++) {
+    		if(j < s.size()) {
+		clave = clave + ""+ s.get(j).substring(i,i+1); 	
+    		}else {
+    			clave = clave + ""+ s.get(j).substring(i); 	
+    		}
+		j++;
+		}
+
+    }
+
+    public String[] comparar(int opcion, String[] sw) {
+
+    	String cadenaM = "";
+    	String aux = "";
+    	String [] binCifrado = new String[m.length];
+    	
+    	for (int i = 0; i < m.length; i++) {
+    		if(opcion == 0) {
+    			cadenaM = cadenaM + "" + m[i];
+    		}else {
+    			cadenaM = cadenaM + "" + sw[i];
+    		}
+		}
+    	System.out.println(cadenaM);
+    	System.out.println(clave);
+    	for (int i = 0; i < cadenaM.length(); i++) {
+    			char m = cadenaM.charAt(i);
+        		char c = clave.charAt(i);
+			if(m == c) {
+				aux = aux + "" + 0;
+			}else {
+				aux = aux + "" + 1;
+			}
+		}
+    	int n = 0;
+    	for (int i = 0; i < m.length; i++) {
+    		String aux2 = "";
+    		for (int j = n; j < n+5; j++) {
+				aux2 = aux2 + "" + aux.charAt(j);
+			}
+    		binCifrado[i] = aux2;
+			n+=5;
+		}
+    	
+    	return binCifrado;
+    }
+    
+   
+    
+    public String devolverPalabra(String [] s) {
+    	String resultado = "";
+    	for (int i = 0; i < s.length; i++) {
+    		for (int j = 0; j < lista.length; j++) {
+    			if(s[i].equalsIgnoreCase(lista[j].getValor())) {
+    				resultado = resultado + lista[j].getSimbolo().toLowerCase();
+    			}
+    		}
 		}
     	return resultado;
     }
     
-    public int[][] llenarMatriz(int n, int opcion){
-    	int[][] matriz = new int[n][n];
-    	Random r = new Random();
-    	if(opcion == 0) {
-    		for (int i = 0; i < matriz.length; i++) {
-				for (int j = 0; j < matriz.length; j++) {
-					matriz[i][j] = r.nextInt(100);
-				}
-			}
-    	}else {
-    		for (int i = 0; i < matriz.length; i++) {
-				for (int j = 0; j < matriz.length; j++) {
-					try {
-						matriz[i][j] = Integer.parseInt(view.ingresarInformacion("Ingrese el valor ["+ 
-								i + "] [" + j + "]"));
-					}catch(Exception e) {
-						view.mostrarInformacion("Error: Ingrese un numero valido");
-						run();
-					}				
-				}
-    		}
-    	}
-    	return matriz;
-    }    
-    
-    public static boolean isPowerOfTwo(int n)
-    {
-        return (int)(Math.ceil((Math.log(n) / Math.log(2))))
-            == (int)(Math.floor(((Math.log(n) / Math.log(2)))));
-    }
 }
+

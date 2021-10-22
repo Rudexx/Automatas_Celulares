@@ -1,4 +1,4 @@
-package co.edu.unbosque.controller;
+package src.co.edu.unbosque.controller;
 
 public class AplMain {
 
